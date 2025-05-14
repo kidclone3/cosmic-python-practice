@@ -22,5 +22,8 @@ class SqlAlchemyRepository(AbstractRepository):
     def get(self, reference):
         return self.session.query(model.Batch).filter_by(reference=reference).one()
 
+    def get_order_line(self, orderid):
+        return self.session.query(model.OrderLine).filter_by(orderid=orderid).one()
+
     def list(self):
         return self.session.query(model.Batch).all()

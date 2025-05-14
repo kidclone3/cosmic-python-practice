@@ -20,6 +20,18 @@ def random_batchref(name=""):
 def random_orderid(name=""):
     return f"order-{name}-{random_suffix()}"
 
+def post_to_add_batch(batchref, sku, qty, eta):
+    url = config.get_api_url()
+    data = {
+        "batchref": batchref,
+        "sku": sku,
+        "qty": qty,
+        "eta": eta,
+    }
+    r = requests.post(f"{url}/add_batch", json=data)
+    assert r.status_code == 201
+    return r.json()
+
 
 @pytest.mark.usefixtures("restart_api")
 def test_happy_path_returns_201_and_allocated_batch(add_stock):
