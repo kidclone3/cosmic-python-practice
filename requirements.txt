@@ -1,6 +1,6 @@
 # app
-sqlalchemy
-flask
+sqlalchemy==1.4.54
+flask==2.3.3
 psycopg2-binary
 
 # tests

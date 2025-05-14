@@ -1,3 +1,6 @@
+import contextlib
+from typing import ContextManager
+
 import pytest
 from allocation.adapters import repository
 from allocation.service_layer import services, unit_of_work
@@ -18,20 +21,38 @@ class FakeRepository(repository.AbstractRepository):
         return list(self._batches)
 
 
-class FakeUnitOfWork(unit_of_work.AbstractUnitOfWork):
-    ...
+class FakeUnitOfWork(ContextManager[unit_of_work.AbstractUnitOfWork]):
+    def __init__(self, batches=None):
+        self.batches = FakeRepository(batches or [])
+        self.orders = FakeRepository([])
+        self.committed = False
+
+    def commit(self):
+        self.committed = True
+
+    def rollback(self):
+        return True
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is not None:
+            self.rollback()
+        else:
+            self.commit()
+
+class FakeUoWContextManager:
+    def __init__(self, uow):
+        self.uow = uow
 
 
 
 def test_add_batch():
     uow = FakeUnitOfWork()
-    # fake_uow_starter = FakeUoWContextManager(uow) ?
-    # fake_uow_starter = contextlib.nullcontext(uow) ?
-    # services.add_batch("b1", "CRUNCHY-ARMCHAIR", 100, None, fake_uow_starter)
+    # fake_uow_starter = contextlib.nullcontext(uow)
+    services.add_batch("b1", "CRUNCHY-ARMCHAIR", 100, None, uow)
     assert uow.batches.get("b1") is not None
     assert uow.committed
 
-@pytest.mark.skip('unskip and fix when ready')
+# @pytest.mark.skip('unskip and fix when ready')
 def test_allocate_returns_allocation():
     uow = FakeUnitOfWork()
     services.add_batch("batch1", "COMPLICATED-LAMP", 100, None, uow)
@@ -39,7 +60,7 @@ def test_allocate_returns_allocation():
     assert result == "batch1"
 
 
-@pytest.mark.skip('unskip and fix when ready')
+# @pytest.mark.skip('unskip and fix when ready')
 def test_allocate_errors_for_invalid_sku():
     uow = FakeUnitOfWork()
     services.add_batch("b1", "AREALSKU", 100, None, uow)
@@ -48,7 +69,7 @@ def test_allocate_errors_for_invalid_sku():
         services.allocate("o1", "NONEXISTENTSKU", 10, uow)
 
 
-@pytest.mark.skip('unskip and fix when ready')
+# @pytest.mark.skip('unskip and fix when ready')
 def test_allocate_commits():
     uow = FakeUnitOfWork()
     services.add_batch("b1", "OMINOUS-MIRROR", 100, None, uow)

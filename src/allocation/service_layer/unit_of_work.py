@@ -31,8 +31,35 @@ DEFAULT_SESSION_FACTORY = sessionmaker(bind=create_engine(
 ))
 
 
-class SqlAlchemyUnitOfWork:
-    ...
+class SqlAlchemyUnitOfWork(AbstractUnitOfWork, ContextManager[AbstractUnitOfWork]):
+    def __init__(self, session_factory=DEFAULT_SESSION_FACTORY):
+        self.session_factory = session_factory
+        self.session: Session | None = None
+        self.repo = repository.SqlAlchemyRepository(self.session)
+
+    def commit(self):
+        try:
+            self.session.commit()
+        except Exception as e:
+            self.session.rollback()
+            raise e
+
+    def rollback(self):
+        self.session.rollback()
+
+    def __enter__(self) -> AbstractUnitOfWork:
+        self.session = self.session_factory()
+        self.batches = repository.SqlAlchemyRepository(self.session)
+        self.orders = repository.SqlAlchemyRepository(self.session)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            self.rollback()
+        else:
+            self.commit()
+        self.session.close()
+
 
 # One alternative would be to define a `start_uow` function,
 # or a UnitOfWorkStarter or UnitOfWorkManager that does the

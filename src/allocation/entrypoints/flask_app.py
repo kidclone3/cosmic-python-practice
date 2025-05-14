@@ -14,21 +14,23 @@ def add_batch():
     eta = request.json['eta']
     if eta is not None:
         eta = datetime.fromisoformat(eta).date()
+    uow = unit_of_work.SqlAlchemyUnitOfWork()
     services.add_batch(
         request.json['ref'], request.json['sku'], request.json['qty'], eta,
-        unit_of_work.SqlAlchemyUnitOfWork(),
+        uow
     )
     return 'OK', 201
 
 
 @app.route("/allocate", methods=['POST'])
 def allocate_endpoint():
+    uow = unit_of_work.SqlAlchemyUnitOfWork()
     try:
         batchref = services.allocate(
             request.json['orderid'],
             request.json['sku'],
             request.json['qty'],
-            unit_of_work.SqlAlchemyUnitOfWork(),
+            uow,
         )
     except (model.OutOfStock, services.InvalidSku) as e:
         return jsonify({'message': str(e)}), 400
