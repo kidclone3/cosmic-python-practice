@@ -78,8 +78,9 @@ def try_to_allocate(orderid, sku, exceptions):
     line = model.OrderLine(orderid, sku, 10)
     try:
         with unit_of_work.SqlAlchemyUnitOfWork() as uow:
-            product = uow.products.get(sku=sku)
+            product = uow.products.get(sku=sku) # Type: Product
             product.allocate(line)
+            uow.products.add(product)
             time.sleep(0.2)
             uow.commit()
     except Exception as e:
@@ -87,7 +88,7 @@ def try_to_allocate(orderid, sku, exceptions):
         exceptions.append(e)
 
 
-@pytest.mark.skip("do this for an advanced challenge")
+# @pytest.mark.skip("do this for an advanced challenge")
 def test_concurrent_updates_to_version_are_not_allowed(postgres_session_factory):
     sku, batch = random_sku(), random_batchref()
     session = postgres_session_factory()

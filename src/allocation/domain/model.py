@@ -18,13 +18,32 @@ def allocate(line: OrderLine, batches: List[Batch]) -> str:
 
 
 class Product:
-    """ dummy implementation, fixme"""
 
-    def __init__(self, *args, **kwargs):
-        self.batches = kwargs.get("batches")
+    def __init__(self,sku: str, batches: list[Batch], version_number: int = 1, **kwargs):
+        self.sku = sku
+        self.batches = batches
+        self._validate_batches()
+        self.version_number = version_number
+
+    def _validate_batch(self, batch):
+        if not isinstance(batch, Batch):
+            raise TypeError(f"Expected a Batch instance, got {type(batch)}")
+        if batch.sku != self.sku:
+            raise ValueError(f"Batch {batch.reference} has sku {batch.sku}, expected {self.sku}")
+
+    def _validate_batches(self):
+        if not isinstance(self.batches, list):
+            raise TypeError(f"Expected a list of Batch instances, got {type(self.batches)}")
+        for batch in self.batches:
+            self._validate_batch(batch)
 
     def allocate(self, line):
+        """Allocate a line to a batch, returning the batch reference."""
+        self.version_number += 1
         return allocate(line, self.batches)
+
+    def get(self, sku):
+        return next((batch for batch in self.batches if batch.sku == sku), None)
 
 
 @dataclass(unsafe_hash=True)

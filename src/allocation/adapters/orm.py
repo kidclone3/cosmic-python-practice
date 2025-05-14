@@ -25,6 +25,14 @@ batches = Table(
     Column("eta", Date, nullable=True),
 )
 
+products = Table(
+    "products",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("sku", String(255), unique=True),
+    Column("version_number", Integer, nullable=False),
+)
+
 allocations = Table(
     "allocations",
     metadata,
@@ -46,4 +54,8 @@ def start_mappers():
                 collection_class=set,
             )
         },
+    )
+    mapper(
+        model.Product,
+        products
     )
