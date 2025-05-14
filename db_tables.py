@@ -1,3 +1,5 @@
+from enum import unique
+
 from sqlalchemy import Table, MetaData, Column, Integer, String, Date, ForeignKey
 
 metadata = MetaData()
@@ -8,14 +10,14 @@ order_lines = Table(
     Column("id", Integer, primary_key=True, autoincrement=True),
     Column("sku", String(255)),
     Column("qty", Integer, nullable=False),
-    Column("orderid", String(255)),
+    Column("orderid", String(255), unique=True),
 )
 
 batches = Table(
     "batches",
     metadata,
     Column("id", Integer, primary_key=True, autoincrement=True),
-    Column("reference", String(255)),
+    Column("reference", String(255), unique=True),
     Column("sku", String(255)),
     Column("_purchased_quantity", Integer, nullable=False),
     Column("eta", Date, nullable=True),
